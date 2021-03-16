@@ -42,6 +42,16 @@ begin
   rw [← iterate_succ_apply, iterate_succ_apply', hi, f.map_zero]
 end
 
+lemma range_it_top_stable : ∀ x ∈ f.range_it_top, f x ∈ f.range_it_top :=
+begin
+  intro x,
+  simp [range_it_top, submodule.mem_infi],
+  intros hx i,
+  rcases hx i with ⟨x', -, rfl⟩,
+  rw [← iterate_succ_apply', iterate_succ_apply],
+  exact mem_range_self _ _
+end
+
 section q2_1
 
 variables (hr : has_finite_range_char f)
@@ -106,9 +116,33 @@ end
 lemma q2_2_a : (f.restrict f.ker_it_top_stable).iterate s = 0 :=
 begin
   ext ⟨x, hx⟩,
+  rw iterate_restrict_comm,
   rw f.ker_it_top_eq_ker_it_ker_char hs at hx,
-  convert hx,
-  congr,
+  exact hx
+end
+
+lemma q2_2_b : function.injective (f.restrict f.range_it_top_stable) :=
+begin
+  rw [← ker_eq_bot, eq_bot_iff],
+  rintros ⟨x, hx⟩ hxf,
+  rw [range_it_top, submodule.mem_infi] at hx,
+  rw [ker_restrict] at hxf,
+  have : f x = 0 := hxf,
+  rcases hx s with ⟨x', -, rfl⟩,
+  rw [← iterate_succ_apply'] at this,
+  have : x' ∈ f.ker_it (s+1) := this,
+  rw f.ker_char_spec hs at this,
+  simpa
+end 
+
+lemma q2_2_c : f.range_it s ⊓ f.ker_it_top = ⊥ :=
+begin
+  rw [eq_bot_iff, f.ker_it_top_eq_ker_it_ker_char hs],
+  rintros x ⟨⟨x', -, rfl⟩, hx⟩,
+  have : x' ∈ f.ker_it (s+s),
+  { simpa [ker_it, iterate_add_apply'] },
+  rw f.q1_2 (f.ker_char_spec hs) s at this,
+  simpa
 end
 
 end q2_2

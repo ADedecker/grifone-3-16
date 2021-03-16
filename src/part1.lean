@@ -39,6 +39,35 @@ lemma iterate_succ (n : ℕ) : f.iterate (n+1) = (f.iterate n).comp f :=
 lemma iterate_succ' (n : ℕ) : f.iterate (n+1) = f.comp (f.iterate n) :=
   ext (f.iterate_succ_apply' n)
 
+lemma iterate_stable {U : submodule K E} (hU : ∀ x ∈ U, f x ∈ U) :
+  ∀ n, ∀ x ∈ U, f.iterate n x ∈ U
+| 0 := λ x hx, hx
+| (n+1) := λ x hx, (iterate_stable n _ (hU x hx))
+
+lemma comp_stable (g : E →ₗ[K] E) {U : submodule K E} (hfU : ∀ x ∈ U, f x ∈ U)
+  (hgU : ∀ x ∈ U, g x ∈ U) : ∀ x ∈ U, (f.comp g) x ∈ U := 
+λ x hx, hfU _ (hgU x hx)
+
+lemma restrict_comp (g : E →ₗ[K] E) {U : submodule K E} (hfU : ∀ x ∈ U, f x ∈ U)
+  (hgU : ∀ x ∈ U, g x ∈ U) (hfgU : ∀ x ∈ U, (f.comp g) x ∈ U) : 
+  (f.comp g).restrict hfgU = (f.restrict hfU).comp (g.restrict hgU) :=
+rfl
+
+lemma iterate_restrict_comm {U : submodule K E} (hU : ∀ x ∈ U, f x ∈ U) :
+  ∀ n, (f.restrict hU).iterate n = (f.iterate n).restrict (f.iterate_stable hU n)
+| 0 := 
+  begin
+    ext ⟨x, hx⟩,
+    simp [iterate, function.iterate_zero],
+    refl
+  end
+| (n+1) :=
+  begin
+    ext ⟨x, hx⟩,
+    simp [iterate_succ', restrict_comp _ _ hU (f.iterate_stable hU n) _],
+    rw iterate_restrict_comm n
+  end
+
 def ker_it (n : ℕ) := (f.iterate n).ker
 
 lemma mem_ker_it_succ_iff (n : ℕ) (x : E) : x ∈ f.ker_it (n+1) ↔ f x ∈ f.ker_it n :=
