@@ -39,7 +39,7 @@ begin
   intros i hi,
   use i,
   rw [ker_it, mem_ker] at ⊢ hi, 
-  rw [← iterate_succ_apply, iterate_succ_apply', hi, f.map_zero]
+  rw [← pow_succ_apply', pow_succ_apply, hi, f.map_zero]
 end
 
 lemma range_it_top_stable : ∀ x ∈ f.range_it_top, f x ∈ f.range_it_top :=
@@ -48,7 +48,7 @@ begin
   simp [range_it_top, submodule.mem_infi],
   intros hx i,
   rcases hx i with ⟨x', -, rfl⟩,
-  rw [← iterate_succ_apply', iterate_succ_apply],
+  rw [← pow_succ_apply, pow_succ_apply'],
   exact mem_range_self _ _
 end
 
@@ -81,14 +81,14 @@ begin
   rw eq_top_iff,
   rintro x -,
   rw submodule.mem_sup,
-  obtain ⟨x', -, hx'⟩ : f.iterate r x ∈ f.range_it (r + r),
-  { convert (f.iterate r).mem_range_self x using 1,
+  obtain ⟨x', -, hx'⟩ : (f^r) x ∈ f.range_it (r + r),
+  { convert (f^r).mem_range_self x using 1,
     exact f.q1_1 (f.range_char_spec hr) _ },
-  rw f.iterate_add_apply at hx',
-  refine ⟨f.iterate r x', _, x - f.iterate r x', _, by abel⟩,
+  rw f.pow_add_apply at hx',
+  refine ⟨(f^r) x', _, x - (f^r) x', _, by abel⟩,
   { rw f.range_it_top_eq_range_it_range_char hr,
-    exact (f.iterate r).mem_range_self x' },
-  { simp [ker_it, hx'] }
+    exact (f^r).mem_range_self x' },
+  { rw [ker_it, mem_ker, map_sub, hx', sub_self] }
 end
 
 end q2_1
@@ -113,10 +113,10 @@ begin
 end
 (le_supr _ _)
 
-lemma q2_2_a : (f.restrict f.ker_it_top_stable).iterate s = 0 :=
+lemma q2_2_a : (f.restrict f.ker_it_top_stable)^s = 0 :=
 begin
   ext ⟨x, hx⟩,
-  rw iterate_restrict_comm,
+  rw pow_restrict_comm,
   rw f.ker_it_top_eq_ker_it_ker_char hs at hx,
   exact hx
 end
@@ -129,21 +129,42 @@ begin
   rw [ker_restrict] at hxf,
   have : f x = 0 := hxf,
   rcases hx s with ⟨x', -, rfl⟩,
-  rw [← iterate_succ_apply'] at this,
+  rw [← pow_succ_apply] at this,
   have : x' ∈ f.ker_it (s+1) := this,
   rw f.ker_char_spec hs at this,
-  simpa
+  rwa [submodule.mem_bot, submodule.mk_eq_zero]
 end 
 
+--lemma q2_2_c : f.range_it s ⊓ f.ker_it_top = ⊥ :=
+--begin
+--  rw [eq_bot_iff, f.ker_it_top_eq_ker_it_ker_char hs],
+--  rintros x ⟨⟨x', -, rfl⟩, hx⟩,
+--  have : x' ∈ f.ker_it (s+s),
+--  { rw [ker_it, mem_ker, pow_add_apply],
+--    exact hx },
+--  rw f.q1_2 (f.ker_char_spec hs) s at this,
+--  rwa [submodule.mem_bot]
+--end
+
 lemma q2_2_c : f.range_it s ⊓ f.ker_it_top = ⊥ :=
-begin
-  rw [eq_bot_iff, f.ker_it_top_eq_ker_it_ker_char hs],
-  rintros x ⟨⟨x', -, rfl⟩, hx⟩,
-  have : x' ∈ f.ker_it (s+s),
-  { simpa [ker_it, iterate_add_apply'] },
-  rw f.q1_2 (f.ker_char_spec hs) s at this,
-  simpa
-end
+suffices h : f.range_it s ⊓ f.ker_it_top ≤ ⊥,
+  by rwa eq_bot_iff,
+assume x ⟨ ⟨x', _, (hx' : (f^s) x' = x)⟩ , (hx : x ∈ f.ker_it_top) ⟩,
+suffices h : x = 0,
+  by rwa submodule.mem_bot,
+have hx₁ : x ∈ f.ker_it s,
+  by rwa ← f.ker_it_top_eq_ker_it_ker_char hs,
+have hx'₁ : (f^s) x' ∈ f.ker_it s,
+  by rwa hx',
+have hx'₂ : x' ∈ f.ker_it (s+s),
+  by rw [ker_it, mem_ker, pow_add_apply]; exact hx'₁,
+have hx'₃ : x' ∈ f.ker_it s,
+  by rwa ← f.q1_2 (f.ker_char_spec hs) s,
+have hx'₄ : (f^s) x' = 0,
+  from hx'₃,
+show x = 0, 
+  by rwa ← hx'
+
 
 end q2_2
 
